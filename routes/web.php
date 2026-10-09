@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CRM\CRMController;
+use App\Http\Controllers\CRM\KanbanController;
+use App\Http\Controllers\CRM\CRMViewController;
 use App\Http\Controllers\Inventory\InventoryController;
 use App\Http\Controllers\Manufacturing\ManufacturingController;
 use App\Http\Controllers\Customization\CustomizationStudioController;
@@ -14,6 +16,8 @@ Route::prefix('crm')->group(function () {
     Route::get('/', [CRMController::class, 'index'])->name('crm.index');
     Route::get('/lead/{id}', [CRMController::class, 'showLead'])->name('crm.lead');
     Route::get('/account/{id}', [CRMController::class, 'showAccount'])->name('crm.account');
+    Route::get('/kanban', [KanbanController::class, 'index'])->name('crm.kanban');
+    Route::post('/kanban/move', [KanbanController::class, 'move'])->name('crm.kanban.move');
 });
 
 Route::prefix('inventory')->group(function () {
