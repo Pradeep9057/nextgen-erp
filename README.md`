@@ -24,7 +24,6 @@ A commercially deployable, high-performance, and fully customizable ERP platform
 - **Database**: PostgreSQL 16 (Primary), SQLite (Testing)
 - **Cache/Queue**: Valkey / Redis
 - **Infrastructure**: Dockerized (Nginx, PHP-FPM, Postgres, Valkey)
-- **Integrity**: SHA-256 $\rightarrow$ Blockchain REST API
 
 ## 🚦 Getting Started
 

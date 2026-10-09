@@ -2,12 +2,18 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CustomFieldController;
+use App\Http\Controllers\FinancialReportController;
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('customization')->group(function () {
         Route::post('/fields', [CustomFieldController::class, 'store']);
         Route::get('/values/{entityType}/{entityId}', [CustomFieldController::class, 'getValues']);
         Route::post('/values/{entityType}/{entityId}', [CustomFieldController::class, 'updateValue']);
+    });
+
+    Route::prefix('reports')->group(function () {
+        Route::get('/trial-balance', [FinancialReportController::class, 'trialBalance']);
+        Route::get('/profit-loss', [FinancialReportController::class, 'profitAndLoss']);
     });
 });
 use App\Core\Http\Controllers\HealthController;

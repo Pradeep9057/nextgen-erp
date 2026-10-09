@@ -54,4 +54,46 @@ class GlService
             }
         });
     }
+
+    /**
+     * Generate a Trial Balance for the organization.
+     */
+    public function getTrialBalance(int $orgId): array
+    {
+        $accounts = GlAccount::where('organization_id', $orgId)->get();
+        $report = [];
+
+        foreach ($accounts as $account) {
+            $report[] = [
+                'account_code' => $account->code,
+                'account_name' => $account->name,
+                'type' => $account->type,
+                'debit' => $account->type === 'asset' || $account->type === 'expense' ? $account->balance : 0,
+                'credit' => in_array($account->type, ['liability', 'equity', 'revenue']) ? $account->balance : 0,
+            ];
+        }
+
+        return $report;
+    }
+
+    /**
+     * Generate a simplified Profit & Loss statement.
+     */
+    public function getProfitAndLoss(int $orgId): array
+    {
+        $revenue = GlAccount::where('organization_id', $orgId)
+            ->where('type', 'revenue')
+            ->sum('balance');
+
+        $expenses = GlAccount::where('organization_id', $orgId)
+            ->where('type', 'expense')
+            ->sum('balance');
+
+        return [
+            'total_revenue' => $revenue,
+            'total_expenses' => $expenses,
+            'net_profit' => $revenue - $expenses,
+        ];
+    }
+}
 }
