@@ -4,18 +4,25 @@ namespace App\Modules\Customization\Services;
 
 use App\Modules\Customization\Models\BusinessRule;
 use Illuminate\Support\Facades\Log;
+use App\Core\Services\CacheService;
 
 class RuleEngineService
 {
+    public function __construct(protected CacheService $cacheService) {}
+
     /**
      * Evaluate rules for a specific event in a module.
      */
     public function evaluate(string $moduleSlug, string $event, array $data): void
     {
-        $rules = BusinessRule::where('module_slug', $moduleSlug)
-            ->where('event', $event)
-            ->where('is_active', true)
-            ->get();
+        $cacheKey = "rules_{$moduleSlug}_{$event}";
+
+        $rules = $this->cacheService->remember($cacheKey, 3600, function() use ($moduleSlug, $event) {
+            return BusinessRule::where('module_slug', $moduleSlug)
+                ->where('event', $event)
+                ->where('is_active', true)
+                ->get();
+        });
 
         foreach ($rules as $rule) {
             if ($this->checkCondition($rule->condition_json, $data)) {

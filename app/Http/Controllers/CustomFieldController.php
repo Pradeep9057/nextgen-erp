@@ -12,15 +12,9 @@ class CustomFieldController extends Controller
     /**
      * Store a new custom field definition.
      */
-    public function store(Request $request)
+    public function store(CustomFieldStoreRequest $request)
     {
-        $validated = $request->validate([
-            'module_slug' => 'required|string',
-            'field_name' => 'required|string',
-            'field_type' => 'required|in:text,number,date,boolean,select',
-            'is_required' => 'boolean',
-            'options' => 'nullable|array',
-        ]);
+        $validated = $request->validated();
 
         $field = CustomField::create($validated);
 
@@ -30,20 +24,17 @@ class CustomFieldController extends Controller
     /**
      * Update a value for a specific entity's custom field.
      */
-    public function updateValue(Request $request, $entityType, $entityId)
+    public function updateValue(CustomFieldValueUpdateRequest $request, $entityType, $entityId)
     {
-        $request->validate([
-            'field_id' => 'required|exists:custom_fields,id',
-            'value' => 'required',
-        ]);
+        $validated = $request->validated();
 
         $value = CustomFieldValue::updateOrCreate(
             [
-                'custom_field_id' => $request->field_id,
+                'custom_field_id' => $validated['field_id'],
                 'entity_type' => $entityType,
                 'entity_id' => $entityId,
             ],
-            ['value' => $request->value]
+            ['value' => $validated['value']]
         );
 
         return response()->json($value);

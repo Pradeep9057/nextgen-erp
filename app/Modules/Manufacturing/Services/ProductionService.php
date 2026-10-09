@@ -14,7 +14,8 @@ use Exception;
 class ProductionService
 {
     public function __construct(
-        protected StockService $stockService
+        protected StockService $stockService,
+        protected \App\Core\Services\CacheService $cacheService
     ) {}
 
     /**
@@ -23,7 +24,11 @@ class ProductionService
     public function createProductionOrder(array $data): MfgProductionOrder
     {
         return DB::transaction(function () use ($data) {
-            $bom = MfgBom::findOrFail($data['mfg_bom_id']);
+            $bomId = $data['mfg_bom_id'];
+
+            $bom = $this->cacheService->remember("bom_{$bomId}", 3600, function() use ($bomId) {
+                return MfgBom::findOrFail($bomId);
+            });
 
             return MfgProductionOrder::create([
                 'organization_id' => $data['organization_id'],
