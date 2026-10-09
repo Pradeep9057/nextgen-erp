@@ -11,6 +11,7 @@ class Contact extends Model
 {
     use SoftDeletes, Filterable;
 
+    protected $table = 'crm_contacts';
     protected $fillable = ['crm_account_id', 'first_name', 'last_name', 'email', 'phone', 'job_title'];
 
     public function account(): BelongsTo

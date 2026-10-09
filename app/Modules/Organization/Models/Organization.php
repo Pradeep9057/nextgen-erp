@@ -10,6 +10,7 @@ class Organization extends Model
 {
     use SoftDeletes;
 
+    protected $table = 'organizations';
     protected $fillable = [
         'name',
         'tax_id',

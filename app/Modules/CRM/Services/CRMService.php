@@ -10,9 +10,9 @@ use Illuminate\Support\Facades\DB;
 
 class CRMService extends BaseService
 {
-    public function __construct(\App\Modules\CRM\Models\Lead $leadModel)
+    public function __construct(\App\Modules\CRM\Models\Lead $leadModel, \App\Core\Services\CacheService $cacheService)
     {
-        parent::__construct($leadModel);
+        parent::__construct($leadModel, $cacheService);
     }
 
     /**

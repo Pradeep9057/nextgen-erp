@@ -11,6 +11,7 @@ class Account extends Model
 {
     use SoftDeletes, Filterable;
 
+    protected $table = 'crm_accounts';
     protected $fillable = ['organization_id', 'name', 'industry', 'website', 'tax_id', 'address', 'is_active'];
 
     public function contacts(): HasMany

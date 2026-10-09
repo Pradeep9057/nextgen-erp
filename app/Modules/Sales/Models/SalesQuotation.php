@@ -4,7 +4,7 @@ namespace App\Modules\Sales\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use App\Core\Traits\Filterable;
 
 class SalesQuotation extends Model
@@ -13,7 +13,7 @@ class SalesQuotation extends Model
 
     protected $fillable = ['organization_id', 'crm_account_id', 'quotation_number', 'issue_date', 'expiry_date', 'total_amount', 'tax_amount', 'status', 'notes'];
 
-    public function items(): HasMany
+    public function items(): MorphMany
     {
         return $this->morphMany(SalesOrderItem::class, 'orderable');
     }

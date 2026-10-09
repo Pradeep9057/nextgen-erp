@@ -5,15 +5,20 @@ namespace App\Modules\Sales\Services;
 use App\Modules\Sales\Models\SalesQuotation;
 use App\Modules\Sales\Models\SalesOrder;
 use App\Modules\Sales\Models\SalesOrderItem;
+use App\Modules\Inventory\Models\InventoryItem;
+use App\Modules\Inventory\Services\StockService;
 use App\Core\Services\BaseService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class SalesService extends BaseService
 {
-    public function __construct(\App\Modules\Sales\Models\SalesQuotation $quotationModel)
-    {
-        parent::__construct($quotationModel);
+    public function __construct(
+        \App\Modules\Sales\Models\SalesQuotation $quotationModel,
+        \App\Core\Services\CacheService $cacheService,
+        protected StockService $stockService
+    ) {
+        parent::__construct($quotationModel, $cacheService);
     }
 
     /**
@@ -35,18 +40,21 @@ class SalesService extends BaseService
             $totalAmount = 0;
             $taxAmount = 0;
 
-            foreach ($items as $item) {
-                $lineTotal = ($item['quantity'] * $item['unit_price']) - ($item['discount'] ?? 0);
-                $itemTax = $lineTotal * (($item['tax_rate'] ?? 0) / 100);
+            foreach ($items as $itemData) {
+                // Validate SKU exists
+                $inventoryItem = InventoryItem::where('sku', $itemData['product_sku'])->firstOrFail();
+
+                $lineTotal = ($itemData['quantity'] * $itemData['unit_price']) - ($itemData['discount'] ?? 0);
+                $itemTax = $lineTotal * (($itemData['tax_rate'] ?? 0) / 100);
                 $finalLineTotal = $lineTotal + $itemTax;
 
                 $quotation->items()->create([
-                    'product_sku' => $item['product_sku'],
-                    'description' => $item['description'],
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $item['unit_price'],
-                    'discount' => $item['discount'] ?? 0,
-                    'tax_rate' => $item['tax_rate'] ?? 0,
+                    'product_sku' => $itemData['product_sku'],
+                    'description' => $itemData['description'] ?? $inventoryItem->name,
+                    'quantity' => $itemData['quantity'],
+                    'unit_price' => $itemData['unit_price'],
+                    'discount' => $itemData['discount'] ?? 0,
+                    'tax_rate' => $itemData['tax_rate'] ?? 0,
                     'total_price' => $finalLineTotal,
                 ]);
 
@@ -87,7 +95,7 @@ class SalesService extends BaseService
                 'shipping_address' => $orderData['shipping_address'] ?? null,
             ]);
 
-            // Copy items from quotation to order
+            // Copy items and reserve stock
             foreach ($quotation->items as $item) {
                 $order->items()->create([
                     'product_sku' => $item->product_sku,
@@ -98,6 +106,23 @@ class SalesService extends BaseService
                     'tax_rate' => $item->tax_rate,
                     'total_price' => $item->total_price,
                 ]);
+
+                // Reserve stock if the item is trackable
+                $inventoryItem = InventoryItem::where('sku', $item->product_sku)->first();
+                if ($inventoryItem && $inventoryItem->is_trackable) {
+                    // For reservation, we typically use a specific transaction type or separate reserve table
+                    // Here we use a negative movement to represent reservation/allocation
+                    // In a real system, we'd use a 'RESERVED' status in the ledger
+                    $this->stockService->moveStock(
+                        $inventoryItem->id,
+                        1, // Default warehouse/location for reservation
+                        -$item->quantity,
+                        'RESERVATION',
+                        'SalesOrder',
+                        $order->id,
+                        "Reservation for Order {$order->order_number}"
+                    );
+                }
             }
 
             $quotation->update(['status' => 'Converted']);

@@ -10,6 +10,7 @@ class InventoryItem extends Model
 {
     use SoftDeletes;
 
+    protected $table = 'inventory_items';
     protected $fillable = [
         'organization_id', 'inventory_category_id', 'inventory_uom_id', 'sku', 'name', 'description', 'min_stock_level', 'max_stock_level', 'is_trackable'
     ];

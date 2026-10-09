@@ -40,8 +40,10 @@ class StockService
             }
 
             // 3. Record the immutable ledger entry
+            $item = InventoryItem::findOrFail($itemId);
+
             return InventoryStockLedger::create([
-                'organization_id' => Auth::user()?->organization_id ?? 1,
+                'organization_id' => Auth::user()?->organization_id ?? $item->organization_id,
                 'inventory_item_id' => $itemId,
                 'inventory_location_id' => $locationId,
                 'quantity' => $quantity,
@@ -49,7 +51,7 @@ class StockService
                 'reference_type' => $refType,
                 'reference_id' => $refId,
                 'transaction_date' => now(),
-                'user_id' => Auth::id() ?? 1,
+                'user_id' => Auth::id() ?? $item->organization_id,
                 'notes' => $notes,
             ]);
         });

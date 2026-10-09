@@ -28,7 +28,7 @@ return new class extends Migration
             $table->unique(['inventory_warehouse_id', 'name']);
         });
 
-        Schema::create('inventory_stock_ledger', function (Blueprint $table) {
+        Schema::create('inventory_stock_ledgers', function (Blueprint $table) {
             $table->id();
             $table->foreignId('organization_id')->constrained()->onDelete('cascade');
             $table->foreignId('inventory_item_id')->constrained()->onDelete('cascade');
@@ -49,7 +49,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('inventory_stock_ledger');
+        Schema::dropIfExists('inventory_stock_ledgers');
         Schema::dropIfExists('inventory_locations');
         Schema::dropIfExists('inventory_warehouses');
     }
