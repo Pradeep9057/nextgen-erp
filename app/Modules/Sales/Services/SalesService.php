@@ -8,6 +8,9 @@ use App\Modules\Sales\Models\SalesOrderItem;
 use App\Modules\Inventory\Models\InventoryItem;
 use App\Modules\Inventory\Services\StockService;
 use App\Core\Services\BaseService;
+use App\Core\Services\IntegrityManager;
+use App\Invoice;
+use App\InvoiceItem;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -16,7 +19,8 @@ class SalesService extends BaseService
     public function __construct(
         \App\Modules\Sales\Models\SalesQuotation $quotationModel,
         \App\Core\Services\CacheService $cacheService,
-        protected StockService $stockService
+        protected StockService $stockService,
+        protected IntegrityManager $integrityManager
     ) {
         parent::__construct($quotationModel, $cacheService);
     }
@@ -128,6 +132,100 @@ class SalesService extends BaseService
             $quotation->update(['status' => 'Converted']);
 
             return $order;
+        });
+    }
+
+    /**
+     * Fulfill a sales order, moving status to 'Shipped' and finalizing stock deduction.
+     */
+    public function fulfillOrder(int $orderId): SalesOrder
+    {
+        return DB::transaction(function () use ($orderId) {
+            $order = SalesOrder::findOrFail($orderId);
+
+            if ($order->status !== 'Pending') {
+                throw new \Exception("Only pending orders can be fulfilled.");
+            }
+
+            // 1. Process each item for final shipment
+            foreach ($order->items as $item) {
+                $inventoryItem = InventoryItem::where('sku', $item->product_sku)->firstOrFail();
+
+                if ($inventoryItem->is_trackable) {
+                    // Resolve the reservation by creating an 'ISSUE' movement.
+                    // In our current immutable ledger, the 'RESERVATION' already decreased
+                    // the available stock. The 'SHIPMENT' record serves as the final
+                    // legal movement from the warehouse.
+                    $this->stockService->moveStock(
+                        $inventoryItem->id,
+                        1, // Default location
+                        0, // Quantity 0 because the stock was already decreased during reservation
+                        'SHIPMENT',
+                        'SalesOrder',
+                        $order->id,
+                        "Final shipment for Order {$order->order_number}"
+                    );
+                }
+            }
+
+            // 2. Update order status
+            $order->update(['status' => 'Shipped']);
+
+            return $order;
+        });
+    }
+
+    /**
+     * Generate an invoice from a shipped sales order and anchor it to the trust-chain.
+     */
+    public function generateInvoice(int $orderId): Invoice
+    {
+        return DB::transaction(function () use ($orderId) {
+            $order = SalesOrder::findOrFail($orderId);
+
+            if ($order->status !== 'Shipped') {
+                throw new \Exception("Only shipped orders can be invoiced.");
+            }
+
+            // 1. Create the Invoice
+            $invoice = Invoice::create([
+                'organization_id' => $order->organization_id,
+                'crm_account_id' => $order->crm_account_id,
+                'sales_order_id' => $order->id,
+                'invoice_number' => 'INV-' . strtoupper(Str::random(8)),
+                'invoice_date' => now(),
+                'due_date' => now()->addDays(30),
+                'total_amount' => $order->total_amount,
+                'tax_amount' => $order->tax_amount,
+                'status' => 'Unpaid',
+            ]);
+
+            // 2. Create Invoice Line Items
+            foreach ($order->items as $item) {
+                InvoiceItem::create([
+                    'invoice_id' => $invoice->id,
+                    'product_sku' => $item->product_sku,
+                    'description' => $item->description,
+                    'quantity' => $item->quantity,
+                    'unit_price' => $item->unit_price,
+                    'discount' => $item->discount,
+                    'tax_rate' => $item->tax_rate,
+                    'total_price' => $item->total_price,
+                ]);
+            }
+
+            // 3. Anchor the Invoice to the TrustPath (Blockchain Integrity)
+            // We seal the invoice record to ensure it cannot be tampered with after issuance
+            $invoiceData = [
+                'invoice_number' => $invoice->invoice_number,
+                'total_amount' => $invoice->total_amount,
+                'status' => $invoice->status,
+                'order_id' => $order->id
+            ];
+
+            $this->integrityManager->sealRecord('Invoice', $invoice->id, $invoiceData);
+
+            return $invoice;
         });
     }
 }

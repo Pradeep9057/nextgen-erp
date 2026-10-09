@@ -1,6 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CustomFieldController;
+
+Route::prefix('customization')->group(function () {
+    Route::post('/fields', [CustomFieldController::class, 'store']);
+    Route::get('/values/{entityType}/{entityId}', [CustomFieldController::class, 'getValues']);
+    Route::post('/values/{entityType}/{entityId}', [CustomFieldController::class, 'updateValue']);
+});
 use App\Core\Http\Controllers\HealthController;
 use App\Modules\Organization\Http\Controllers\OrganizationController;
 use App\Modules\CRM\Http\Controllers\LeadController;

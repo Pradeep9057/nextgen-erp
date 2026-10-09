@@ -38,6 +38,36 @@ class ProductionService
     }
 
     /**
+     * Start production by transitioning status and automatically consuming materials based on BOM.
+     */
+    public function startProduction(int $orderId, int $locationId): void
+    {
+        DB::transaction(function () use ($orderId, $locationId) {
+            $order = MfgProductionOrder::findOrFail($orderId);
+
+            if ($order->status !== 'Planned') {
+                throw new Exception("Only planned orders can be started.");
+            }
+
+            // 1. Calculate required materials from BOM
+            $bom = MfgBom::findOrFail($order->mfg_bom_id);
+            $bomItems = $bom->items;
+            $multiplier = $order->quantity_planned / $bom->quantity_to_produce;
+
+            $consumptions = [];
+            foreach ($bomItems as $bomItem) {
+                $consumptions[] = [
+                    'item_id' => $bomItem->inventory_item_id,
+                    'quantity' => $bomItem->quantity * $multiplier
+                ];
+            }
+
+            // 2. Consume materials
+            $this->consumeMaterials($orderId, $locationId, $consumptions);
+        });
+    }
+
+    /**
      * Consume materials for a production order.
      */
     public function consumeMaterials(int $orderId, int $locationId, array $consumptions): void

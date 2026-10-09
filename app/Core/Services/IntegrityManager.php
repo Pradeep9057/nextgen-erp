@@ -33,6 +33,13 @@ class IntegrityManager
                 'metadata' => ['action' => 'seal']
             ]);
 
+            // Queue for blockchain anchoring via Transactional Outbox
+            $this->outbox->enqueue('integrity.seal', [
+                'entity_type' => $entityType,
+                'entity_id' => $entityId,
+                'hash' => $hash
+            ]);
+
             return $hash;
         });
     }
