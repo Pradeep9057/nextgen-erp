@@ -40,3 +40,10 @@ Route::prefix('reports')->group(function () {
     Route::get('/balance-sheet', [FinancialReportController::class, 'balanceSheet'])->name('reports.balance-sheet');
 });
 
+Route::prefix('crm/views')->group(function () {
+    Route::get('/', [CRMViewController::class, 'index'])->name('crm.views.index');
+    Route::post('/', [CRMViewController::class, 'store'])->name('crm.views.store');
+    Route::put('/{view}', [CRMViewController::class, 'update'])->name('crm.views.update');
+    Route::delete('/{view}', [CRMViewController::class, 'destroy'])->name('crm.views.destroy');
+});
+
