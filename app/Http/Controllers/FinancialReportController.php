@@ -27,4 +27,13 @@ class FinancialReportController extends Controller
             'data' => $this->glService->getProfitAndLoss($orgId)
         ]);
     }
+
+    public function balanceSheet(Request $request)
+    {
+        $orgId = $request->user()->organization_id ?? 1;
+        return response()->json([
+            'report' => 'Balance Sheet',
+            'data' => $this->glService->getBalanceSheet($orgId)
+        ]);
+    }
 }

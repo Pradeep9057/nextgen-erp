@@ -26,7 +26,9 @@ class GlService
             }
 
             if (abs($totalDebit - $totalCredit) > 0.001) {
-                throw new Exception("General Ledger imbalance: Debits ({$totalDebit}) must equal Credits ({$totalCredit}).");
+                $errorMsg = "General Ledger imbalance: Debits ({$totalDebit}) must equal Credits ({$totalCredit}).";
+                \App\Core\Services\ResilienceLogger::logTransactionError($errorMsg, ['entries' => $entries]);
+                throw new Exception($errorMsg);
             }
 
             foreach ($entries as $entry) {
@@ -93,6 +95,38 @@ class GlService
             'total_revenue' => $revenue,
             'total_expenses' => $expenses,
             'net_profit' => $revenue - $expenses,
+        ];
+    }
+
+    /**
+     * Generate a full Balance Sheet.
+     */
+    public function getBalanceSheet(int $orgId): array
+    {
+        $accounts = GlAccount::where('organization_id', $orgId)->get();
+
+        $assets = $accounts->where('type', 'asset')->sum('balance');
+        $liabilities = $accounts->where('type', 'liability')->sum('balance');
+        $equity = $accounts->where('type', 'equity')->sum('balance');
+        $revenue = $accounts->where('type', 'revenue')->sum('balance');
+        $expenses = $accounts->where('type', 'expense')->sum('balance');
+
+        $netIncome = $revenue - $expenses;
+
+        return [
+            'assets' => [
+                'total' => $assets,
+                'details' => $accounts->where('type', 'asset')->map(fn($a) => ['name' => $a->name, 'balance' => $a->balance])->values()
+            ],
+            'liabilities' => [
+                'total' => $liabilities,
+                'details' => $accounts->where('type', 'liability')->map(fn($a) => ['name' => $a->name, 'balance' => $a->balance])->values()
+            ],
+            'equity' => [
+                'total' => $equity + $netIncome,
+                'details' => $accounts->where('type', 'equity')->map(fn($a) => ['name' => $a->name, 'balance' => $a->balance])->values()
+            ],
+            'retained_earnings' => $netIncome
         ];
     }
 }

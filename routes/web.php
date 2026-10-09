@@ -6,6 +6,7 @@ use App\Http\Controllers\CRM\CRMController;
 use App\Http\Controllers\Inventory\InventoryController;
 use App\Http\Controllers\Manufacturing\ManufacturingController;
 use App\Http\Controllers\Customization\CustomizationStudioController;
+use App\Http\Controllers\FinancialReportController;
 
 Route::get('/', [DashboardController::class, 'index']);
 
@@ -31,5 +32,11 @@ Route::prefix('customization')->group(function () {
     Route::get('/', [CustomizationStudioController::class, 'index'])->name('customization.index');
     Route::post('/field', [CustomizationStudioController::class, 'createField'])->name('customization.field.store');
     Route::put('/rule/{id}', [CustomizationStudioController::class, 'updateRule'])->name('customization.rule.update');
+});
+
+Route::prefix('reports')->group(function () {
+    Route::get('/trial-balance', [FinancialReportController::class, 'trialBalance'])->name('reports.trial-balance');
+    Route::get('/profit-loss', [FinancialReportController::class, 'profitAndLoss'])->name('reports.profit-loss');
+    Route::get('/balance-sheet', [FinancialReportController::class, 'balanceSheet'])->name('reports.balance-sheet');
 });
 

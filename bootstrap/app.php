@@ -18,4 +18,23 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        $exceptions->render(function (Throwable $e, Request $request) {
+            // Log critical errors via ResilienceLogger
+            if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface && $e->getStatusCode() >= 500) {
+                \App\Core\Services\ResilienceLogger::logCritical($e);
+            } elseif (!($e instanceof \Illuminate\Validation\ValidationException) && !($e instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException)) {
+                \App\Core\Services\ResilienceLogger::logCritical($e);
+            }
+
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json([
+                    'error' => 'System Error',
+                    'message' => config('app.debug') ? $e->getMessage() : 'An internal error occurred. Please contact support.',
+                    'code' => $e->getCode() ?: 500,
+                ], 500);
+            }
+
+            return null; // Allow default Laravel rendering for web
+        });
     })->create();
