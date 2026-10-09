@@ -9,6 +9,7 @@ use App\Modules\Inventory\Models\InventoryItem;
 use App\Modules\Inventory\Services\StockService;
 use App\Core\Services\BaseService;
 use App\Core\Services\IntegrityManager;
+use App\Core\Services\GlService;
 use App\Invoice;
 use App\InvoiceItem;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,8 @@ class SalesService extends BaseService
         \App\Modules\Sales\Models\SalesQuotation $quotationModel,
         \App\Core\Services\CacheService $cacheService,
         protected StockService $stockService,
-        protected IntegrityManager $integrityManager
+        protected IntegrityManager $integrityManager,
+        protected GlService $glService
     ) {
         parent::__construct($quotationModel, $cacheService);
     }
@@ -214,8 +216,29 @@ class SalesService extends BaseService
                 ]);
             }
 
-            // 3. Anchor the Invoice to the TrustPath (Blockchain Integrity)
-            // We seal the invoice record to ensure it cannot be tampered with after issuance
+            // 3. Financial Posting (Double Entry)
+            // Debit Accounts Receivable, Credit Sales Revenue
+            $this->glService->postTransaction(
+                $order->organization_id,
+                [
+                    [
+                        'account_id' => 1, // Assuming 1 is Accounts Receivable
+                        'debit' => $order->total_amount,
+                        'credit' => 0,
+                        'description' => "Invoice {$invoice->invoice_number} for Order {$order->order_number}"
+                    ],
+                    [
+                        'account_id' => 2, // Assuming 2 is Sales Revenue
+                        'debit' => 0,
+                        'credit' => $order->total_amount,
+                        'description' => "Revenue from Order {$order->order_number}"
+                    ],
+                ],
+                'Invoice',
+                $invoice->id
+            );
+
+            // 4. Anchor the Invoice to the TrustPath
             $invoiceData = [
                 'invoice_number' => $invoice->invoice_number,
                 'total_amount' => $invoice->total_amount,
