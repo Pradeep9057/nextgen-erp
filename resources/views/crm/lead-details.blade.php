@@ -3,119 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lead Details - NextGen ERP</title>
+    <title>Lead 360 View - NextGen ERP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
+        .metric-card { transition: all 0.2s ease; }
+        .metric-card:hover { transform: translateY(-2px); }
     </style>
 </head>
-<body class="bg-slate-50 font-sans antialiased text-slate-900">
+<body class="bg-slate-50 text-slate-900">
     <div class="min-h-screen flex flex-col">
+        <!-- Top Navigation -->
         <header class="bg-white border-b border-slate-200 p-4 sticky top-0 z-10">
-            <div class="max-w-7xl mx-auto flex justify-between items-center">
-                <div class="flex items-center space-x-3">
-                    <a href="/" class="bg-blue-600 text-white p-2 rounded-lg font-black text-xl tracking-tighter">NG</a>
-                    <h1 class="text-xl font-bold tracking-tight text-slate-800">CRM <span class="text-blue-600">Details</span></h1>
+            <div class="max-w-full mx-auto flex justify-between items-center px-6">
+                <div class="flex items-center space-x-4">
+                    <a href="{{ route('crm.index') }}" class="bg-blue-600 text-white p-2 rounded-lg font-black text-xl tracking-tighter">NG</a>
+                    <nav class="flex items-center text-sm font-medium text-slate-500 space-x-2">
+                        <a href="{{ route('crm.index') }}" class="hover:text-blue-600">Leads</a>
+                        <span>&rarr;</span>
+                        <span class="text-slate-900">{{ $lead360['profile']->first_name }} {{ $lead360['profile']->last_name }}</span>
+                    </nav>
                 </div>
-                <a href="{{ route('crm.index') }}" class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0h7m-7 0v-7" />
-                    </svg>
-                    Back to Hub
-                </a>
+                <div class="flex items-center space-x-3">
+                    <button class="text-sm font-semibold text-slate-600 px-4 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">Edit Lead</button>
+                    <button class="text-sm font-semibold bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">Convert to Opportunity</button>
+                </div>
             </div>
         </header>
 
-        <main class="p-6 lg:p-10 max-w-7xl mx-auto w-full space-y-8">
-            <!-- Lead Profile Header -->
-            <section class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
-                <div class="flex items-center space-x-4">
-                    <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-2xl font-bold">
-                        {{ substr($lead->name, 0, 1) }}
-                    </div>
-                    <div>
-                        <h2 class="text-3xl font-extrabold text-slate-900">{{ $lead->name }}</h2>
-                        <p class="text-slate-500">{{ $lead->email }} • {{ $lead->company }}</p>
-                    </div>
-                </div>
-                <div class="flex space-x-3">
-                    <button class="bg-slate-100 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-slate-200 transition-colors">
-                        Edit Lead
-                    </button>
-                    <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors">
-                        Convert to Account
-                    </button>
-                </div>
-            </section>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <!-- Main Info -->
-                <div class="lg:col-span-2 space-y-8">
-                    <section class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                        <h3 class="text-lg font-bold text-slate-900 mb-6">Lead Information</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <p class="text-xs font-medium text-slate-500 uppercase mb-1">Status</p>
-                                <p class="text-sm font-semibold text-slate-900">
-                                    <span class="px-2 py-1 rounded-full text-xs {{ $lead->status === 'qualified' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700' }}">
-                                        {{ ucfirst($lead->status) }}
-                                    </span>
-                                </p>
-                            </div>
-                            <div>
-                                <p class="text-xs font-medium text-slate-500 uppercase mb-1">Estimated Value</p>
-                                <p class="text-sm font-semibold text-slate-900">${{ number_format($lead->estimated_value, 2) }}</p>
-                            </div>
-                            <div>
-                                <p class="text-xs font-medium text-slate-500 uppercase mb-1">Industry</p>
-                                <p class="text-sm font-semibold text-slate-900">{{ $lead->industry ?? 'Not Specified' }}</p>
-                            </div>
-                            <div>
-                                <p class="text-xs font-medium text-slate-500 uppercase mb-1">Source</p>
-                                <p class="text-sm font-semibold text-slate-900">{{ $lead->source ?? 'Direct' }}</p>
+        <main class="p-6 max-w-7xl mx-auto w-full grid grid-cols-12 gap-6">
+            <!-- Left Column: Profile & Metrics -->
+            <div class="col-span-12 lg:col-span-4 space-y-6">
+                <!-- Profile Card -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="h-24 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+                    <div class="px-6 pb-6">
+                        <div class="relative -mt-12 mb-4">
+                            <div class="w-20 h-20 rounded-2xl bg-white p-1 shadow-md">
+                                <img src="https://ui-avatars.com/api/?name={{ urlencode($lead360['profile']->first_name . ' ' . $lead360['profile']->last_name) }}&background=random" class="w-full h-full rounded-xl object-cover" alt="Avatar">
                             </div>
                         </div>
-                    </section>
+                        <h2 class="text-2xl font-bold text-slate-900">{{ $lead360['profile']->first_name }} {{ $lead360['profile']->last_name }}</h2>
+                        <p class="text-slate-500 text-sm mb-6">{{ $lead360['profile']->job_title }} at {{ $lead360['profile']->company }}</p>
 
-                    <section class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                        <h3 class="text-lg font-bold text-slate-900 mb-6">Notes & Timeline</h3>
-                        <div class="space-y-4">
-                            <div class="flex space-x-4">
-                                <div class="text-xs text-slate-400 font-medium w-20 shrink-0">Oct 09, 2026</div>
-                                <div class="bg-slate-50 p-3 rounded-lg text-sm text-slate-600 flex-1 border border-slate-100">
-                                    Initial outreach completed. Lead is interested in the premium silver line.
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                <p class="text-[10px] uppercase font-bold text-slate-400 mb-1">Status</p>
+                                <span class="text-sm font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 capitalize">{{ $lead360['profile']->status }}</span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                <p class="text-[10px] uppercase font-bold text-slate-400 mb-1">Lead Source</p>
+                                <span class="text-sm font-semibold text-slate-700">{{ $lead360['profile']->source ?? 'Direct' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3 border-t border-slate-100 pt-6">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-slate-500">Email</span>
+                                <span class="font-medium text-slate-900">{{ $lead360['profile']->email }}</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-slate-500">Phone</span>
+                                <span class="font-medium text-slate-900">{{ $lead360['profile']->phone }}</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-slate-500">Location</span>
+                                <span class="font-medium text-slate-900">{{ $lead360['profile']->city }}, {{ $lead360['profile']->country }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Insights / Metrics -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                    <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center">
+                        <svg class="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        Predictive Metrics
+                    </h3>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div class="metric-card p-4 rounded-xl bg-blue-50 border border-blue-100 flex justify-between items-center">
+                            <div>
+                                <p class="text-xs font-medium text-blue-600 mb-1">Lead Score</p>
+                                <p class="text-2xl font-bold text-blue-900">{{ $lead360['metrics']['lead_score'] }}<span class="text-sm font-normal text-blue-400 ml-1">/100</span></p>
+                            </div>
+                            <div class="w-12 h-12 rounded-full border-4 border-blue-200 border-t-blue-600 flex items-center justify-center text-xs font-bold text-blue-600">
+                                {{ round(($lead360['metrics']['lead_score'] / 100) * 100) }}%
+                            </div>
+                        </div>
+                        <div class="metric-card p-4 rounded-xl bg-indigo-50 border border-indigo-100 flex justify-between items-center">
+                            <div>
+                                <p class="text-xs font-medium text-indigo-600 mb-1">Engagement</p>
+                                <p class="text-lg font-bold text-indigo-900">{{ $lead360['metrics']['engagement_level'] }}</p>
+                            </div>
+                            <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 12h18"/></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Activities & Related -->
+            <div class="col-span-12 lg:col-span-8 space-y-6">
+                <!-- Tabs -->
+                <div class="flex space-x-1 bg-slate-200/50 p-1 rounded-xl w-fit">
+                    <button class="px-4 py-2 text-sm font-semibold rounded-lg bg-white text-slate-900 shadow-sm">Timeline</button>
+                    <button class="px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:text-slate-900 transition-colors">Opportunities</button>
+                    <button class="px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:text-slate-900 transition-colors">Documents</button>
+                </div>
+
+                <!-- Activity Timeline Placeholder -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-bold text-slate-900">Activity Timeline</h3>
+                        <button class="text-sm font-semibold text-blue-600 hover:text-blue-700">+ Log Activity</button>
+                    </div>
+
+                    <div class="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-blue-500 before:via-slate-200 before:to-transparent">
+                        <!-- Activity Item 1 (Demo) -->
+                        <div class="relative pl-12">
+                            <div class="absolute left-0 top-1 w-10 h-10 rounded-full bg-white border-2 border-blue-500 flex items-center justify-center z-10">
+                                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.5 7.82 3 3 0 01-3 3H5a2 2 0 01-2-2V5z"/></svg>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <div class="flex justify-between items-start mb-1">
+                                    <p class="text-sm font-bold text-slate-900">Discovery Call</p>
+                                    <span class="text-[10px] font-medium text-slate-400">2 hours ago</span>
+                                </div>
+                                <p class="text-sm text-slate-600">Discussed quarterly requirements. Lead is interested in Enterprise tier.</p>
+                                <div class="mt-2 flex items-center text-xs text-slate-400">
+                                    <img src="https://ui-avatars.com/api/?name=Sales+Rep&background=random" class="w-4 h-4 rounded-full mr-2">
+                                    Logged by Sales Rep
                                 </div>
                             </div>
-                            <div class="flex space-x-4">
-                                <div class="text-xs text-slate-400 font-medium w-20 shrink-0">Oct 07, 2026</div>
-                                <div class="bg-slate-50 p-3 rounded-lg text-sm text-slate-600 flex-1 border border-slate-100">
-                                    Lead entered the pipeline via website contact form.
+                        </div>
+
+                        <!-- Activity Item 2 (Demo) -->
+                        <div class="relative pl-12">
+                            <div class="absolute left-0 top-1 w-10 h-10 rounded-full bg-white border-2 border-slate-300 flex items-center justify-center z-10">
+                                <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <div class="flex justify-between items-start mb-1">
+                                    <p class="text-sm font-bold text-slate-900">Email Sent</p>
+                                    <span class="text-[10px] font-medium text-slate-400">Yesterday</span>
+                                </div>
+                                <p class="text-sm text-slate-600">Sent introductory brochure and pricing sheet.</p>
+                                <div class="mt-2 flex items-center text-xs text-slate-400">
+                                    <img src="https://ui-avatars.com/api/?name=Sales+Rep&background=random" class="w-4 h-4 rounded-full mr-2">
+                                    Logged by Sales Rep
                                 </div>
                             </div>
                         </div>
-                    </section>
+
+                        <!-- Empty State for actual data -->
+                        @if(empty($lead360['activities']))
+                            <div class="text-center py-10 px-6 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+                                <p class="text-slate-400 text-sm italic">No further activities recorded. Log your first interaction to get started.</p>
+                            </div>
+                        @endif
+                    </div>
                 </div>
 
-                <!-- Side Panel -->
-                <div class="space-y-8">
-                    <section class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                        <h3 class="text-lg font-bold text-slate-900 mb-4">Quick Actions</h3>
-                        <div class="space-y-3">
-                            <button class="w-full text-left px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                                Send Email
-                            </button>
-                            <button class="w-full text-left px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-// 0 0 0 0 0 0" />
-                                </svg>
-                                Schedule Call
-                            </button>
+                <!-- Related Opportunities -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                    <h3 class="text-lg font-bold text-slate-900 mb-4">Related Opportunities</h3>
+                    @if(count($lead360['related']['opportunities']) > 0)
+                        <div class="overflow-hidden border border-slate-100 rounded-xl">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-50 text-slate-500 font-medium border-b border-slate-100">
+                                    <tr>
+                                        <th class="px-4 py-3">Opportunity Name</th>
+                                        <th class="px-4 py-3">Stage</th>
+                                        <th class="px-4 py-3 text-right">Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    @foreach($lead360['related']['opportunities'] as $opp)
+                                        <tr class="hover:bg-slate-50 transition-colors">
+                                            <td class="px-4 py-3 font-medium text-slate-900">{{ $opp->title }}</td>
+                                            <td class="px-4 py-3">
+                                                <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold">{{ $opp->stage }}</span>
+                                            </td>
+                                            <td class="px-4 py-3 text-right font-mono font-bold text-slate-900">${{ number_format($opp->estimated_value, 0) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
-                    </section>
+                    @else
+                        <div class="text-center py-10 px-6 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+                            <p class="text-slate-400 text-sm italic">No associated opportunities found.</p>
+                        </div>
+                    @endif
                 </div>
             </div>
         </main>

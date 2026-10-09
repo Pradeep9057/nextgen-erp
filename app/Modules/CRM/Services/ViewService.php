@@ -39,7 +39,12 @@ class ViewService
      */
     public function getDefaultView(string $entityType): ?CrmView
     {
-        return CrmView::where('organization_id', Auth::user()->organization_id)
+        $user = auth()->user();
+        if (!$user) {
+            return null;
+        }
+
+        return CrmView::where('organization_id', $user->organization_id)
             ->where('entity_type', $entityType)
             ->where('is_default', true)
             ->first();

@@ -6,11 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Modules\CRM\Models\Lead;
 use App\Modules\CRM\Models\Account;
 use App\Modules\CRM\Services\ViewService;
+use App\Modules\CRM\Services\Entity360Service;
 use Illuminate\Http\Request;
 
 class CRMController extends Controller
 {
-    public function __construct(protected ViewService $viewService) {}
+    public function __construct(
+        protected ViewService $viewService,
+        protected Entity360Service $entity360Service
+    ) {}
 
     public function index(Request $request)
     {
@@ -36,13 +40,13 @@ class CRMController extends Controller
 
     public function showLead($id)
     {
-        $lead = Lead::findOrFail($id);
-        return view('crm.lead-details', ['lead' => $lead]);
+        $data = $this->entity360Service->getLead360($id);
+        return view('crm.lead-details', ['lead360' => $data]);
     }
 
     public function showAccount($id)
     {
-        $account = Account::findOrFail($id);
-        return view('crm.account-details', ['account' => $account]);
+        $data = $this->entity360Service->getAccount360($id);
+        return view('crm.account-details', ['account360' => $data]);
     }
 }
