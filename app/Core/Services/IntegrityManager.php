@@ -8,7 +8,10 @@ use Illuminate\Support\Facades\Log;
 
 class IntegrityManager
 {
-    public function __construct(protected IntegrityService $integrityService) {}
+    public function __construct(
+        protected IntegrityService $integrityService,
+        protected OutboxService $outbox
+    ) {}
 
     /**
      * Seal a record by recording its hash in the integrity log.
